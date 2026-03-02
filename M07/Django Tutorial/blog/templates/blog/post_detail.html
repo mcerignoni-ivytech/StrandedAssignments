@@ -1,0 +1,55 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+    <article class="post">
+        {% if user.is_authenticated %}
+            <aside class="actions">
+                <a class="btn btn-secondary" href="{% url 'post_edit' pk=post.pk %}">Edit</a>
+
+                {% if not post.published_date %}
+                    <form method="POST" action="{% url 'post_publish' pk=post.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Publish</button>
+                    </form>
+                {% endif %}
+
+                <form method="POST" action="{% url 'post_remove' pk=post.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Delete</button>
+                </form>
+            </aside>
+        {% endif %}
+
+        {% if post.published_date %}
+            <div class="date">{{ post.published_date }}</div>
+        {% endif %}
+
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.text|linebreaksbr }}</p>
+
+        <hr>
+
+        <a class="btn btn-secondary" href="{% url 'add_comment_to_post' pk=post.pk %}">
+            Add comment
+        </a>
+
+        {% for comment in post.comments.all %}
+            {% if user.is_authenticated or comment.approved_comment %}
+                <div class="comment">
+                    <div class="date">
+                        {{ comment.created_date }}
+
+                        {% if user.is_authenticated and not comment.approved_comment %}
+                            <a href="{% url 'comment_remove' pk=comment.pk %}">Remove</a>
+                            <a href="{% url 'comment_approve' pk=comment.pk %}">Approve</a>
+                        {% endif %}
+                    </div>
+                    <strong>{{ comment.author }}</strong>
+                    <p>{{ comment.text|linebreaks }}</p>
+                </div>
+            {% endif %}
+        {% empty %}
+            <p>No comments here yet :(</p>
+        {% endfor %}
+    </article>
+{% endblock %}
